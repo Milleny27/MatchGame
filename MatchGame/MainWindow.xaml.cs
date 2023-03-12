@@ -15,15 +15,34 @@ using System.Windows.Shapes;
 
 namespace MatchGame
 {
+    using System.Windows.Threading;
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
+        DispatcherTimer timer = new DispatcherTimer();
+        int tenthsOfSecondsElapsed;
+        int matchesFound;
         public MainWindow()
         {
             InitializeComponent();
+
+            timer.Interval = TimeSpan.FromSeconds(.1);
+            timer.Tick += Timer_Tick;
+
             SetUpGame();
+        }
+
+        private void Timer_Tick(object? sender, EventArgs e)
+        {
+            tenthsOfSecondsElapsed++;
+            timeTextBlock.Text = (tenthsOfSecondsElapsed / 10F).ToString("0.0s");
+            if (matchesFound == 8)
+            {
+                timer.Stop();
+                timeTextBlock.Text = timeTextBlock.Text + " - Jogar de novo? ";
+            }
         }
 
         private void SetUpGame()
@@ -44,11 +63,18 @@ namespace MatchGame
 
             foreach (TextBlock textBlock in mainGrid.Children.OfType<TextBlock>())
             { /* Procurando por todos os TextBlock presentes no mainGrid */
-                int index = random.Next(animalEmoji.Count); /* Gerando um número de 0 até o tamanho da lista */
-                string nextEmoji = animalEmoji[index]; /* pegando o emoji na posição do index gerado*/
-                textBlock.Text = nextEmoji; /* atualizando o TextBlock com o emoji */
-                animalEmoji.RemoveAt(index); /* removendo o emoji da lista */
+                if (textBlock.Name != "timeTextBlock")
+                {
+                    textBlock.Visibility = Visibility.Visible;
+                    int index = random.Next(animalEmoji.Count); /* Gerando um número de 0 até o tamanho da lista */
+                    string nextEmoji = animalEmoji[index]; /* pegando o emoji na posição do index gerado*/
+                    textBlock.Text = nextEmoji; /* atualizando o TextBlock com o emoji */
+                    animalEmoji.RemoveAt(index); /* removendo o emoji da lista */
+                }
             }
+            timer.Start();
+            tenthsOfSecondsElapsed =  0;
+            matchesFound = 0;
 
         }
 
@@ -65,6 +91,7 @@ namespace MatchGame
             }
             else if (textBlock.Text == lastTextBlockClicked.Text)
             {
+                matchesFound++;
                 textBlock.Visibility = Visibility.Hidden;
                 findingMatch = false;
             }
@@ -74,6 +101,14 @@ namespace MatchGame
                 findingMatch = false;
             }
 
+        }
+
+        private void timeTextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (matchesFound == 8)
+            {
+                SetUpGame();
+            }
         }
     }
 }
